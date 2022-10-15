@@ -1,0 +1,41 @@
+[project]
+name = "infer_pyproject"
+version = "0.0.0"
+description = "Create a pyproject.toml file for an existing project."
+requires-python = ">=3.6"
+
+# Requirements: This is done differently by poetry!
+dependencies = [
+    "Arcade==2.6.16",
+    "numpy==1.23.4",
+    "typer[full]==0.6.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "mypy",
+    "flake8",
+]
+
+[tool.black]
+line-length = 88
+target_version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# get the directory this is located in
+__dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+SCRIPT_NAME=$0
+
+function isodate {
+  date +"%Y-%m-%dT%H:%M:%S%z"
+}
+
+
+function log {
+  echo "$SCRIPT_NAME:$(isodate): $1"
+}
+
+# add :usb=audio if we are using usb audio to the board def
+arduino-cli compile --export-binaries -b teensy:avr:teensy40:usb=serialmidiaudio .
+
+teensy_loader_cli --mcu=TEENSY40 -s build/teensy.avr.teensy40/"$(basename $__dir)".ino.hex
