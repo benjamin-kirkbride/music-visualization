@@ -19,7 +19,7 @@ import serial
 import led_wall_driver_software as driver
 
 
-def _receive_exactly(sock, n) -> bytes:  # type: ignore
+def _receive_exactly(sock, n) -> bytes:
     data = b""
 
     while n > 0:
@@ -30,8 +30,13 @@ def _receive_exactly(sock, n) -> bytes:  # type: ignore
     return data
 
 
-def main(led_wall_port: str, server_port: int, width: int, height: int,) -> None:
-    """ Main function of strobe script
+def main(
+    led_wall_port: str,
+    server_port: int,
+    width: int,
+    height: int,
+) -> None:
+    """Main function of strobe script
 
     Args:
         led_wall_port: path of LED Wall port
@@ -42,7 +47,9 @@ def main(led_wall_port: str, server_port: int, width: int, height: int,) -> None
     """
 
     led_wall = driver.LEDWall(
-        led_wall_port=serial.Serial(led_wall_port), width=width, height=height,
+        led_wall_port=serial.Serial(led_wall_port),
+        width=width,
+        height=height,
     )
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,8 +59,6 @@ def main(led_wall_port: str, server_port: int, width: int, height: int,) -> None
     # blank out LED Wall
     black_frame = np.zeros((width, height, 3), dtype=np.uint8)
     led_wall(black_frame)
-    print("bye")
-
 
     # only allow one connection at a time
     server_socket.listen(1)
@@ -71,7 +76,11 @@ def main(led_wall_port: str, server_port: int, width: int, height: int,) -> None
         pickled_frame = _receive_exactly(client, size)
 
         frame = pickle.loads(pickled_frame)
-        assert frame.shape == (27, 48, 3), f"frame had incorrect shape: {frame.shape}"
+        assert frame.shape == (
+            27,
+            48,
+            3,
+        ), f"frame had incorrect shape: {frame.shape}"
         # decrease brightness
         # frame = np.multiply(frame, 0.2).astype(np.uint8)
         led_wall(frame)
