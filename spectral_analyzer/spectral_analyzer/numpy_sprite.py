@@ -6,7 +6,7 @@ import arcade
 import arcade.gl as gl
 import numpy as np
 
-PROJECT_ROOT = Path(__file__).parent
+from . import PROJECT_ROOT
 
 
 class NumpySprite:

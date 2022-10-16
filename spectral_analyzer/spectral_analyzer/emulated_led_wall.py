@@ -29,43 +29,43 @@ class EmulatedLEDWall(arcade.Window):
 
     def __init__(
         self,
-        window_width: int,
-        window_height: int,
-        panel_width: int,
-        panel_height: int,
         display_scale: int,
+        matrix_width: int,
+        matrix_height: int,
         frame_queue: mp.Queue,
         title: str,
     ):
+        self._window_width = matrix_width * display_scale
+        self._window_height = matrix_height * display_scale
+
         super().__init__(
-            window_width, window_height, title, antialiasing=False
+            self._window_width, self._window_height, title, antialiasing=False
         )
 
-        self._window_width = window_width
-        self._window_height = window_height
-        self._panel_width = panel_width
-        self._panel_height = panel_height
-        self._display_scale = display_scale
+        self._matrix_width = matrix_width
+        self._matrix_height = matrix_height
         self._frame_queue = frame_queue
 
         arcade.enable_timings()
 
         blank_frame = np.zeros(
-            (self._panel_height, self._panel_height, 4), dtype=np.uint8
+            (self._matrix_height, self._matrix_height, 4), dtype=np.uint8
         )
 
         self.frame = NumpySprite(
             self.ctx,
             self._window_width / 2,
             self._window_height / 2,
-            self._panel_width,
-            self._panel_height,
+            self._matrix_width,
+            self._matrix_height,
             self._window_width,
             self._window_height,
             blank_frame,
         )
 
-        grid_array = generate_grid(window_width, window_height, display_scale)
+        grid_array = generate_grid(
+            self._window_width, self._window_height, display_scale
+        )
 
         self.grid = NumpySprite(
             self.ctx,
@@ -78,8 +78,8 @@ class EmulatedLEDWall(arcade.Window):
             grid_array,
         )
 
-        self.left_channel_bins = np.full((self._panel_width), 0)
-        self.right_channel_bins = np.full((self._panel_width), 0)
+        self.left_channel_bins = np.full((self._matrix_width), 0)
+        self.right_channel_bins = np.full((self._matrix_width), 0)
 
         arcade.set_background_color(arcade.color.BLACK)
 
@@ -91,7 +91,11 @@ class EmulatedLEDWall(arcade.Window):
         while not self._frame_queue.empty():
             newest_frame = self._frame_queue.get()
 
-        assert newest_frame.shape == (self._panel_height, self._panel_width, 4)
+        assert newest_frame.shape == (
+            self._matrix_height,
+            self._matrix_width,
+            4,
+        )
         self.frame.write(newest_frame)
 
         # print(arcade.get_fps())
@@ -107,5 +111,5 @@ class EmulatedLEDWall(arcade.Window):
 
 
 def process(**kwargs):
-    EmulatedLEDWall(title="LED Panel Emulator", **kwargs)
+    EmulatedLEDWall(title="LED matrix Emulator", **kwargs)
     arcade.run()

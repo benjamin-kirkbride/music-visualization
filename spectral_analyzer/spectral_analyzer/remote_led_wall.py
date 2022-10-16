@@ -4,18 +4,22 @@ import socket
 import struct
 import sys
 
+import numpy as np
+
 
 class RemoteLEDWall:
     """Object for controlling and managing the LED Wall"""
 
     def __init__(
         self,
-        panel_width: int,
-        panel_height: int,
+        matrix_width: int,
+        matrix_height: int,
         led_wall_server: str,
+        brightness: int,
     ):
-        self._width = panel_width
-        self._height = panel_height
+        self._width = matrix_width
+        self._height = matrix_height
+        self._brightness = brightness / 100
 
         self._connect_to_remote_wall(led_wall_server=led_wall_server)
 
@@ -36,6 +40,7 @@ class RemoteLEDWall:
         self.led_wall_connection.connect((server_address, server_port))
 
     def send_frame(self, frame) -> None:
+        frame = np.multiply(frame, self._brightness).astype(np.uint8)
         pickled_frame = pickle.dumps(frame)
 
         # https://stackoverflow.com/a/60067126/1342874
@@ -44,7 +49,7 @@ class RemoteLEDWall:
         self.led_wall_connection.sendall(pickled_frame)
 
 
-def process(frame_queue: mp.Queue, frame_rate: float, **kwargs):
+def process(frame_queue: mp.Queue, **kwargs):
     remote_led_wall = RemoteLEDWall(**kwargs)
 
     while not frame_queue.empty():

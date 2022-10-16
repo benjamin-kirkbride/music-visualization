@@ -1,0 +1,31 @@
+# Spectral Analyzer configuration
+
+serial_port = "/dev/ttyACM0"
+
+# the dimensions of the pixel matrix used to displayed the SA
+matrix_width = 48
+matrix_height = 27
+
+# the emulated display window
+[emulator-window]
+enabled = true
+
+# how large each pixel should appear on-screen
+# this directly effects the size of the window by multiplying each side
+display_scale = 40
+
+# should a 1px grid be overlaid on each pixel?
+# this does not effect the window size
+use_grid = true
+
+# TODO: implement
+show_fps = false
+
+[led-matrix]
+enabled = true
+
+# integer between 1 and 100 (percentage)
+brightness = 80
+
+# port MUST be included
+url = 'matrix.example.com:12345'

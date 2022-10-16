@@ -1,68 +1,89 @@
 import multiprocessing as mp
+import sys
+import time
 
+import tomli
 import typer
 
-from . import emulated_led_wall, frame_generation, remote_led_wall
-
-PANEL_WIDTH = 48
-PANEL_HEIGHT = 27
-DISPLAY_SCALE = 40
-
-WINDOW_WIDTH = PANEL_WIDTH * DISPLAY_SCALE
-WINDOW_HEIGHT = PANEL_HEIGHT * DISPLAY_SCALE
-
-REMOTE_LED_WALL_FRAME_RATE = 1 / 60
+from . import (
+    PROJECT_ROOT,
+    emulated_led_wall,
+    frame_generation,
+    remote_led_wall,
+)
 
 app = typer.Typer()
 
 
 @app.command()
-def bar():
-    typer.echo("I'm just here to mess things up...")
-
-
-# what runs if no command is specified on CLI
-@app.command()
 def main():
-    """Main function"""
-    emulator_frame_queue = mp.Queue()
-    remote_frame_queue = mp.Queue()
+    with open(PROJECT_ROOT.parent / "config.toml", "rb") as f:
+        config = tomli.load(f)
+
+    frame_queues = []
+    if config["emulator-window"]["enabled"]:
+        emulator_frame_queue = mp.Queue()
+        frame_queues.append(emulator_frame_queue)
+
+    if config["led-matrix"]["enabled"]:
+        remote_frame_queue = mp.Queue()
+        frame_queues.append(remote_frame_queue)
 
     frame_generation_process = mp.Process(
         target=frame_generation.process_function,
         kwargs={
-            "frame_queues": [emulator_frame_queue, remote_frame_queue],
-            "teensy_port": "/dev/ttyACM0",
-            "width": PANEL_WIDTH,
-            "height": PANEL_HEIGHT,
+            "frame_queues": frame_queues,
+            "teensy_port": config["serial_port"],
+            "width": config["matrix_width"],
+            "height": config["matrix_height"],
         },
+        daemon=True,
     )
     frame_generation_process.start()
 
-    emulated_led_wall_process = mp.Process(
-        target=emulated_led_wall.process,
-        kwargs={
-            "window_width": WINDOW_WIDTH,
-            "window_height": WINDOW_HEIGHT,
-            "panel_width": PANEL_WIDTH,
-            "panel_height": PANEL_HEIGHT,
-            "display_scale": DISPLAY_SCALE,
-            "frame_queue": emulator_frame_queue,
-        },
-    )
-    emulated_led_wall_process.start()
+    if config["emulator-window"]["enabled"]:
+        emulated_led_wall_process = mp.Process(
+            target=emulated_led_wall.process,
+            kwargs={
+                "display_scale": config["emulator-window"]["display_scale"],
+                "matrix_width": config["matrix_width"],
+                "matrix_height": config["matrix_height"],
+                "frame_queue": emulator_frame_queue,
+            },
+            daemon=True,
+        )
+        emulated_led_wall_process.start()
 
-    remote_led_wall_process = mp.Process(
-        target=remote_led_wall.process,
-        kwargs={
-            "panel_width": PANEL_WIDTH,
-            "panel_height": PANEL_HEIGHT,
-            "frame_rate": REMOTE_LED_WALL_FRAME_RATE,
-            "frame_queue": remote_frame_queue,
-            "led_wall_server": "led-wall.caverage.lan:12345",
-        },
-    )
-    remote_led_wall_process.start()
+    if config["led-matrix"]["enabled"]:
+        remote_led_wall_process = mp.Process(
+            target=remote_led_wall.process,
+            kwargs={
+                "matrix_width": config["matrix_width"],
+                "matrix_height": config["matrix_height"],
+                "frame_queue": remote_frame_queue,
+                "led_wall_server": config["led-matrix"]["url"],
+                "brightness": config["led-matrix"]["brightness"],
+            },
+            daemon=True,
+        )
+        remote_led_wall_process.start()
+
+    while True:
+        # this ensures on first loop that the processes have time to start
+        # also prevents the loop from running too hot
+        time.sleep(0.1)
+        if not frame_generation_process.is_alive():
+            sys.exit()
+
+        if config["emulator-window"]["enabled"]:
+            if not emulated_led_wall_process.is_alive():
+                sys.exit("Emulator Window closed, exiting...")
+
+        if config["led-matrix"]["enabled"]:
+            if not remote_led_wall_process.is_alive():
+                sys.exit(
+                    "Process sending frames to the led matrix stopped, exiting..."
+                )
 
 
 if __name__ == "__main__":

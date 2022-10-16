@@ -1,21 +1,20 @@
 [project]
-name = "infer_pyproject"
-version = "0.0.0"
-description = "Create a pyproject.toml file for an existing project."
-requires-python = ">=3.6"
+name = "spectral_analyzer"
+version = "0.0.0" # why is this required
+requires-python = ">=3.10"
 
-# Requirements: This is done differently by poetry!
 dependencies = [
-    "Arcade==2.6.16",
-    "numpy==1.23.4",
-    "typer[full]==0.6.1",
+  "Arcade==2.6.16",
+  "numpy==1.23.4", 
+  "typer[all]==0.6.1",
+  "tomli==2.0.1"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "mypy",
-    "flake8",
+  "black",
+  "mypy",
+  "flake8",
 ]
 
 [tool.black]
