@@ -26,8 +26,6 @@ class RemoteLEDWall:
     def _connect_to_remote_wall(self, led_wall_server: str):
         # connect to LED Wall
         # TODO: this should retry
-        # TODO: impliment some kind of keepalive/timeout handling
-        self.frame_change_signal = mp.Queue(maxsize=1)
         server_address = led_wall_server.split(":")[0]
         try:
             server_port = int(led_wall_server.split(":")[1])
@@ -40,6 +38,7 @@ class RemoteLEDWall:
         self.led_wall_connection.connect((server_address, server_port))
 
     def send_frame(self, frame) -> None:
+        # apply brightness
         frame = np.multiply(frame, self._brightness).astype(np.uint8)
         pickled_frame = pickle.dumps(frame)
 

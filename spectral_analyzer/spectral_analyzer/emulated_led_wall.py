@@ -1,6 +1,8 @@
 import multiprocessing as mp
+import sys
 
 import arcade
+import arcade.key
 import numpy as np
 
 from .numpy_sprite import NumpySprite
@@ -108,6 +110,10 @@ class EmulatedLEDWall(arcade.Window):
 
         self.frame.draw()
         self.grid.draw()
+
+    def on_key_press(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.ESCAPE:
+            sys.exit()
 
 
 def process(**kwargs):

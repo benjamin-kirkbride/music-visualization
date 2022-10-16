@@ -7,6 +7,7 @@ import typer
 
 from . import (
     PROJECT_ROOT,
+    config,
     emulated_led_wall,
     frame_generation,
     remote_led_wall,
@@ -17,9 +18,6 @@ app = typer.Typer()
 
 @app.command()
 def main():
-    with open(PROJECT_ROOT.parent / "config.toml", "rb") as f:
-        config = tomli.load(f)
-
     frame_queues = []
     if config["emulator-window"]["enabled"]:
         emulator_frame_queue = mp.Queue()
@@ -36,6 +34,8 @@ def main():
             "teensy_port": config["serial_port"],
             "width": config["matrix_width"],
             "height": config["matrix_height"],
+            "style": config["style"],
+            "gradient_str": config["gradient"],
         },
         daemon=True,
     )

@@ -28,6 +28,9 @@ class LEDWall:
         if self.serpentine:
             frame = self._serpentinize(frame)
 
+        # flip frame
+        frame = np.flipud(frame)
+
         self.led_wall_port.write(frame.tobytes())
 
         # wait for the LED wall to respond
@@ -35,7 +38,7 @@ class LEDWall:
 
     @staticmethod
     def _serpentinize(input_array: np.ndarray) -> np.ndarray:  # type: ignore
-        """ Serpentinize input array
+        """Serpentinize input array
 
         See also: boustrophedon
 
