@@ -12,6 +12,7 @@ import pickle
 import socket
 import struct
 import sys
+import time
 
 import numpy as np
 import serial
@@ -19,15 +20,94 @@ import serial
 import led_wall_driver_software as driver
 
 
-def _receive_exactly(sock, n) -> bytes:
-    data = b""
+class ConnectionClosed(Exception):
+    pass
 
-    while n > 0:
-        chunk = sock.recv(n)
-        n -= len(chunk)
-        data += chunk
 
-    return data
+class MatrixServer:
+    def __init__(
+        self,
+        led_wall_port: str,
+        server_port: int,
+        width: int,
+        height: int,
+    ):
+        self._width = width
+        self._height = height
+        self._server_port = server_port
+
+        self._led_matrix = driver.LEDWall(
+            led_wall_port=serial.Serial(led_wall_port),
+            width=width,
+            height=height,
+        )
+        self.clear_display()
+
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_REUSEADDR, 1
+        )
+        self._server_socket.bind(("", server_port))
+
+        # only allow one connection at a time
+        self._server_socket.listen(1)
+
+        self._client = None
+        self._client_address = None
+
+    def clear_display(self):
+        black_frame = np.zeros((self._width, self._height, 3), dtype=np.uint8)
+        self._led_matrix(black_frame)
+
+    def _await_client(self):
+        self.clear_display()
+        print(f"Waiting for connection on port {self._server_port}")
+        # disable timeout while we wait for a client
+        self._client, self._client_address = self._server_socket.accept()
+        print(f"Client connected: {self._client_address}")
+
+    def run(self):
+        while True:
+            if self._client is None:
+                assert self._client_address is None
+                self._await_client()
+
+            # https://stackoverflow.com/a/60067126/1342874
+            try:
+                header = self._receive_exactly(self._client, 8)
+            except ConnectionClosed:
+                continue
+            packet_size = struct.unpack("!Q", header)[0]
+            try:
+                pickled_frame = self._receive_exactly(
+                    self._client, packet_size
+                )
+            except ConnectionClosed:
+                continue
+
+            frame = pickle.loads(pickled_frame)
+            assert frame.shape == (
+                27,
+                48,
+                3,
+            ), f"frame had incorrect shape: {frame.shape}"
+            self._led_matrix(frame)
+
+    def _receive_exactly(self, sock: socket.socket, n) -> bytes:
+        data = b""
+        while n > 0:
+            chunk = sock.recv(n)
+
+            # https://stackoverflow.com/questions/16745409/what-does-pythons-socket-recv-return-for-non-blocking-sockets-if-no-data-is-r#comment115084279_16745409
+            if len(chunk) == 0:
+                print("Client Disconnected")
+                self._client = None
+                self._client_address = None
+                raise ConnectionClosed
+            n -= len(chunk)
+            data += chunk
+
+        return data
 
 
 def main(
@@ -45,45 +125,13 @@ def main(
         width: LED Wall width in pixels
         height: LED Wall height in pixels
     """
-
-    led_wall = driver.LEDWall(
-        led_wall_port=serial.Serial(led_wall_port),
+    matrix_server = MatrixServer(
+        led_wall_port=led_wall_port,
+        server_port=server_port,
         width=width,
         height=height,
     )
-
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(("", server_port))
-
-    # blank out LED Wall
-    black_frame = np.zeros((width, height, 3), dtype=np.uint8)
-    led_wall(black_frame)
-
-    # only allow one connection at a time
-    server_socket.listen(1)
-    print(f"Listening on port {server_port}")
-
-    print("Waiting on client connection")
-    client, client_address = server_socket.accept()
-    print(f"Client connected: {client_address}")
-
-    while True:
-        # https://stackoverflow.com/a/60067126/1342874
-        header = _receive_exactly(client, 8)
-        size = struct.unpack("!Q", header)[0]
-        print(struct.unpack("!Q", header))
-        pickled_frame = _receive_exactly(client, size)
-
-        frame = pickle.loads(pickled_frame)
-        assert frame.shape == (
-            27,
-            48,
-            3,
-        ), f"frame had incorrect shape: {frame.shape}"
-        # decrease brightness
-        # frame = np.multiply(frame, 0.2).astype(np.uint8)
-        led_wall(frame)
+    matrix_server.run()
 
 
 if __name__ == "__main__":
