@@ -3,6 +3,8 @@ venv/
 example/
 secrets.h
 .vscode
+*.toml
+!pyproject.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
