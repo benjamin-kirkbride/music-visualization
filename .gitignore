@@ -3,9 +3,14 @@ venv/
 example/
 secrets.h
 .vscode
+_*
+
+# exclude all toml (config) except pyproject
 *.toml
 !pyproject.toml
 
+
+### Github's Python .gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
