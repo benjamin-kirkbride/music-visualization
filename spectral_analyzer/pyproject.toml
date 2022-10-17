@@ -6,7 +6,6 @@ requires-python = ">=3.10"
 dependencies = [
   "Arcade==2.6.16",
   "numpy==1.23.4", 
-  "typer[all]==0.6.1",
   "tomli==2.0.1",
   "Pillow==9.1.1",
 ]

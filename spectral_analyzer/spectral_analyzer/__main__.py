@@ -2,21 +2,9 @@ import multiprocessing as mp
 import sys
 import time
 
-import tomli
-import typer
-
-from . import (
-    PROJECT_ROOT,
-    config,
-    emulated_led_wall,
-    frame_generation,
-    remote_led_wall,
-)
-
-app = typer.Typer()
+from . import config, emulated_led_wall, frame_generation, remote_led_wall
 
 
-@app.command()
 def main():
     frame_queues = []
     if config["emulator-window"]["enabled"]:
@@ -87,4 +75,4 @@ def main():
 
 
 if __name__ == "__main__":
-    app()
+    main()
