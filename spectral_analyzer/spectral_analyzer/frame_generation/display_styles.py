@@ -29,7 +29,7 @@ class Style(abc.ABC):
         pass
 
 
-class CenteredTwoChannel(Style):
+class BottomUp(Style):
     def __call__(
         self,
         left_channel: NDArray[np.float64],
@@ -59,6 +59,38 @@ class CenteredTwoChannel(Style):
         frame = np.concatenate((left_graph, right_graph), axis=1)
 
         frame = np.flipud(frame).copy()
+
+        return frame
+
+
+class TopDown(Style):
+    def __call__(
+        self,
+        left_channel: NDArray[np.float64],
+        right_channel: NDArray[np.float64],
+    ) -> NDArray[np.uint8]:
+        # odd
+        if self._width % 2:
+            each_channel_width = int(self._width / 2) + 1
+        # even
+        else:
+            each_channel_width = int(self._width / 2)
+
+        left_graph = utils.one_channel(
+            int(each_channel_width),
+            self._height,
+            left_channel,
+            self._gradient_array,
+        )
+        right_graph = utils.one_channel(
+            int(each_channel_width),
+            self._height,
+            right_channel,
+            self._gradient_array,
+        )
+
+        left_graph = np.fliplr(left_graph)
+        frame = np.concatenate((left_graph, right_graph), axis=1)
 
         return frame
 
@@ -165,7 +197,8 @@ class Mouth(Style):
 
 
 STYLE: Dict[str, Type[Style]] = {
-    "centered_two_channel": CenteredTwoChannel,
+    "bottom_up": BottomUp,
+    "top_down": TopDown,
     "center_out": CenterOut,
     "mouth": Mouth,
 }

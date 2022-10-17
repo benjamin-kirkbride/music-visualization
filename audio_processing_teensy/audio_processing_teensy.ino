@@ -79,7 +79,7 @@ void loop()
     l_bins[20] = l_fft.read(185, 220);
     l_bins[21] = l_fft.read(221, 262);
     l_bins[22] = l_fft.read(263, 312);
-    l_bins[23] = l_fft.read(313, 512);
+    l_bins[23] = l_fft.read(313, 372);
 
     if (l_fft_recieved)
     {
@@ -126,7 +126,7 @@ void loop()
     r_bins[20] = r_fft.read(185, 220);
     r_bins[21] = r_fft.read(221, 262);
     r_bins[22] = r_fft.read(263, 312);
-    r_bins[23] = r_fft.read(313, 512);
+    r_bins[23] = r_fft.read(313, 372);
 
     if (r_fft_recieved)
     {
