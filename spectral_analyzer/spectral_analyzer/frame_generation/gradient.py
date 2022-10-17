@@ -1,10 +1,13 @@
+import xml.etree.ElementTree as ET
 from typing import List, NamedTuple, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 from PIL import ImageColor
 
-from .. import config
+from .. import PROJECT_ROOT, config
+
+GRADIENTS = PROJECT_ROOT / "frame_generation" / "gradients"
 
 
 class RGBA(NamedTuple):
@@ -24,7 +27,7 @@ def _hex_to_rgba(hex_color: str) -> RGBA:
 
 
 def gen_gradient(
-    height: int, stops: List[Tuple[float, RGBA | str]]
+    height: int, stops: List[Tuple[float, RGBA]]
 ) -> NDArray[np.uint8]:
     """Create a gradient of multiple stops.
 
@@ -49,9 +52,6 @@ def gen_gradient(
         offset = stop[0]
         assert 0 <= offset <= 1
         color = stop[1]
-        if isinstance(color, str):
-            color = _hex_to_rgba(color)
-        assert isinstance(color, RGBA)
 
         end_point = int(remaining_points * offset)
         size = end_point - previous_end_point
@@ -79,6 +79,25 @@ def gen_gradient(
     return gradient_array.astype(np.uint8)
 
 
+def svg_to_gradient(svg_name) -> List[Tuple[float, RGBA]]:
+    tree = ET.parse((GRADIENTS / svg_name).with_suffix(".svg"))
+    # https://stackoverflow.com/a/55049369/1342874
+    # we only support one gradient per svg, so only grab the first one
+    linear_gradient_element = tree.getroot().find(".//linearGradient")
+    assert isinstance(linear_gradient_element, ET.Element)
+
+    stops: List[Tuple[float, RGBA]] = []
+    for stop in linear_gradient_element.iter("stop"):
+        raw_offset = stop.attrib["offset"]
+        assert isinstance(raw_offset, str)
+        offset = float(raw_offset[0:-1]) / 100
+
+        rgba = _hex_to_rgba(stop.attrib["stop-color"])
+
+        stops.append((offset, rgba))
+    return stops
+
+
 def from_config(gradient_str: str, height: int) -> NDArray[np.uint8]:
-    config_spec = config["gradients"][gradient_str]
-    return gen_gradient(height, config_spec)
+    stops = svg_to_gradient(gradient_str)
+    return gen_gradient(height, stops)

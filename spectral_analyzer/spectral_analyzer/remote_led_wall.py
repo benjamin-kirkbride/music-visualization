@@ -40,6 +40,8 @@ class RemoteLEDWall:
     def send_frame(self, frame) -> None:
         # apply brightness
         frame = np.multiply(frame, self._brightness).astype(np.uint8)
+        # TODO: figure out why the channels are backwards
+        frame = np.fliplr(frame)
         pickled_frame = pickle.dumps(frame)
 
         # https://stackoverflow.com/a/60067126/1342874

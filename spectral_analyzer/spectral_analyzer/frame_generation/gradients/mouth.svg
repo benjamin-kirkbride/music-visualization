@@ -1,0 +1,10 @@
+<!-- https://doodad.dev/gradient-generator?share=linear-180-50-50-50-50-0_50-ffffffff_50-ff0000ff -->
+<svg height="100%" width="100%">
+    <defs>
+        <linearGradient id="0" x1="0.5" y1="0" x2="0.5" y2="1">
+            <stop offset="50%" stop-color="#ffffff" />
+            <stop offset="50%" stop-color="#ff0000" />
+        </linearGradient>
+    </defs>
+    <rect fill="url(#0)" height="100%" width="100%" />
+</svg>
