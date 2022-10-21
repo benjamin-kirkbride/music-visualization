@@ -1,24 +1,42 @@
 from io import TextIOWrapper
-from pathlib import Path
 
 import numpy as np
 import numpy.typing
 
+# the actual maximum energy of each bin
 max_bin_energies = None
+# what we are treating as the maximum energy of each bin for this frame
+acting_max_bin_energies = None
 
 
 def _get_bins_as_percentage_of_max(bins):
     # we intentionally don't distinguish between channels for the max
     global max_bin_energies
+    global acting_max_bin_energies
 
     # init on first run
     if max_bin_energies is None:
         max_bin_energies = np.array([float(0) for i in range(len(bins))])
-    # TODO: something with this
-    new_max_bin_energies = np.maximum(bins, max_bin_energies)
-    max_bin_energies = new_max_bin_energies
+        acting_max_bin_energies = max_bin_energies
 
-    np.divide(bins, max_bin_energies, out=bins)
+    max_bin_energies = np.maximum(bins, max_bin_energies)
+
+    # calculate `acting_max_bin_energies`
+    # subtract a tenth of a percent off each frame
+    # ensure we don't go below zero
+    acting_max_bin_energies = np.maximum(
+        np.subtract(acting_max_bin_energies, 0.1), 0
+    )
+    # don't go below the current bins
+    acting_max_bin_energies = np.maximum(acting_max_bin_energies, bins)
+    # don't go below 75% of the actual maximum
+    max_bin_energies_gate = np.multiply(max_bin_energies, 0.5)
+    acting_max_bin_energies = np.maximum(
+        max_bin_energies_gate, acting_max_bin_energies
+    )
+
+    np.divide(bins, acting_max_bin_energies, out=bins)
+    # if anything is zero it becomes nan, this deals with that
     bins = np.nan_to_num(bins)
 
     return bins

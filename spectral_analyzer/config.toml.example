@@ -11,11 +11,6 @@ gradient = "normal"
 matrix_width = 48
 matrix_height = 27
 
-[gradients]
-normal = [ [0.5, "#FFFFFF"], [0.5, "#FF0000"] ]
-irish = [ [0.3, "#3CD23C"], [0.75, "#FFD700"], [0.95, "#FF0000"] ]
-rainbow = [ [0.0, "#9400D3"], [0.2, "#0000FF"], [0.4, "#00FF00"], [0.6, "#FFFF00"], [0.8, "#FF7F00"], [1.0, "#FF0000"] ]
-
 # the emulated display window
 [emulator-window]
 enabled = true
